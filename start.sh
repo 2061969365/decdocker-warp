@@ -20,15 +20,13 @@ sed -i "s/NODE_REMARK_PLACEHOLDER/$NODE_REMARK/g" /app/www/index.html
 httpd -p 8081 -h /app/www &
 echo "🌐 静态网页服务已在内部 8081 端口挂载"
 
-/usr/bin/xray -config /app/config.json &
-echo "🚀 Xray 核心网关已在本地 8080 端口拉起"
-
-# ======================= WARP 设置 =======================
+# ======================= WARP 设置（在 xray 启动前完成注入） =======================
 NO_WARP="${NO_WARP:-false}"
 
 if [ "$NO_WARP" != "true" ]; then
   echo "🛡️ 正在配置 WARP 出站..."
 
+  cp /app/config.json /app/config.json.bak 2>/dev/null
   WARP_PRIVATE_KEY="${WARP_PRIVATE_KEY:-}"
   WARP_ADDRESS="${WARP_ADDRESS:-}"
   WARP_RESERVED_JSON="${WARP_RESERVED_JSON:-}"
@@ -40,13 +38,13 @@ if [ "$NO_WARP" != "true" ]; then
 
     WGCF_PATH="/app/wgcf"
     if [ ! -f "$WGCF_PATH" ]; then
-      curl -sL -o /tmp/wgcf "https://github.com/ViRb3/wgcf/releases/download/v2.2.22/wgcf_2.2.22_linux_${ARCH}"
+      curl -sL -o /tmp/wgcf "https://github.com/ViRb3/wgcf/releases/download/v2.2.22/wgcf_2.2.22_linux_${ARCH}" && \
       mv /tmp/wgcf "$WGCF_PATH" && chmod +x "$WGCF_PATH"
     fi
 
     rm -f /app/wgcf-account.toml /app/wgcf-profile.conf
-    echo Yes | "$WGCF_PATH" register 2>/dev/null
-    "$WGCF_PATH" generate 2>/dev/null
+    echo Yes | timeout 30 "$WGCF_PATH" register 2>/dev/null || echo "⚠️ wgcf register 超时/失败"
+    timeout 30 "$WGCF_PATH" generate 2>/dev/null || echo "⚠️ wgcf generate 超时/失败"
 
     if [ -f /app/wgcf-profile.conf ]; then
       WARP_PRIVATE_KEY=$(grep '^PrivateKey' /app/wgcf-profile.conf | cut -d'=' -f2- | tr -d ' ')
@@ -83,13 +81,24 @@ if [ "$NO_WARP" != "true" ]; then
         "inboundTag": ["vless-in"],
         "outboundTag": "warp"
       }]
-    ' /app/config.json > /tmp/config.json && mv /tmp/config.json /app/config.json
+    ' /app/config.json > /tmp/config.json
 
-    echo "✅ WARP 已注入 xray 配置"
+    if jq empty /tmp/config.json 2>/dev/null; then
+      mv /tmp/config.json /app/config.json
+      echo "✅ WARP 已注入 xray 配置"
+    else
+      cp /app/config.json.bak /app/config.json
+      echo "⚠️ WARP 注入失败（JSON 校验不通过），已回滚"
+    fi
   else
     echo "⚠️ WARP 注册失败，跳过"
   fi
 fi
+
+[ -f /app/config.json ] && /usr/bin/xray -config /app/config.json &
+echo "🚀 Xray 核心网关已在本地 8080 端口拉起"
+
+sync
 
 # ======================= 哪吒探针 =======================
 NEZHA_SERVER="${NEZHA_SERVER:-}"
