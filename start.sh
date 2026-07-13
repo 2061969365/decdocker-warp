@@ -13,20 +13,20 @@ if [ -z "$REAL_COUNTRY" ]; then REAL_COUNTRY="Cloud"; fi
 NODE_REMARK="${REAL_COUNTRY}_${REAL_IP}"
 echo "📍 探测成功！当前主机实际地理标记: $NODE_REMARK"
 
-sed -i "s/UUID_PLACEHOLDER/$UUID/g" /app/config.json
+sed -i "s/UUID_PLACEHOLDER/$UUID/g" /app/sb-config.json
 sed -i "s/UUID_PLACEHOLDER/$UUID/g" /app/www/index.html
 sed -i "s/NODE_REMARK_PLACEHOLDER/$NODE_REMARK/g" /app/www/index.html
 
 httpd -p 8081 -h /app/www &
 echo "🌐 静态网页服务已在内部 8081 端口挂载"
 
-# ======================= WARP 设置（在 xray 启动前完成注入） =======================
+# ======================= WARP 注册 + 注入 sing-box =======================
 NO_WARP="${NO_WARP:-false}"
 
 if [ "$NO_WARP" != "true" ]; then
   echo "🛡️ 正在配置 WARP 出站..."
 
-  cp /app/config.json /app/config.json.bak 2>/dev/null
+  cp /app/sb-config.json /app/sb-config.json.bak 2>/dev/null
   WARP_PRIVATE_KEY="${WARP_PRIVATE_KEY:-}"
   WARP_ADDRESS="${WARP_ADDRESS:-}"
   WARP_RESERVED_JSON="${WARP_RESERVED_JSON:-}"
@@ -43,8 +43,8 @@ if [ "$NO_WARP" != "true" ]; then
     fi
 
     rm -f /app/wgcf-account.toml /app/wgcf-profile.conf
-    echo Yes | timeout 30 "$WGCF_PATH" register 2>/dev/null || echo "⚠️ wgcf register 超时/失败"
-    timeout 30 "$WGCF_PATH" generate 2>/dev/null || echo "⚠️ wgcf generate 超时/失败"
+    echo Yes | timeout 30 "$WGCF_PATH" register 2>/dev/null || echo "⚠️ wgcf register 超时"
+    timeout 30 "$WGCF_PATH" generate 2>/dev/null || echo "⚠️ wgcf generate 超时"
 
     if [ -f /app/wgcf-profile.conf ]; then
       WARP_PRIVATE_KEY=$(grep '^PrivateKey' /app/wgcf-profile.conf | cut -d'=' -f2- | tr -d ' ')
@@ -62,41 +62,36 @@ if [ "$NO_WARP" != "true" ]; then
 
     jq --arg key "$WARP_PRIVATE_KEY" --arg addr "$WARP_ADDRESS_IP" --argjson reserved "$WARP_RESERVED_JSON" '
       .outbounds += [{
-        "protocol": "wireguard",
-        "tag": "warp",
-        "settings": {
-          "secretKey": $key,
-          "address": [$addr + "/32"],
-          "peers": [{
-            "endpoint": "engage.cloudflareclient.com:2408",
-            "publicKey": "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=",
-            "allowedIPs": ["0.0.0.0/0", "::/0"]
-          }],
-          "reserved": $reserved,
-          "mtu": 1280
-        }
+        "type": "wireguard",
+        "tag": "warp-wg",
+        "server": "engage.cloudflareclient.com",
+        "server_port": 2408,
+        "local_address": [$addr + "/32"],
+        "private_key": $key,
+        "peer_public_key": "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=",
+        "reserved": $reserved,
+        "mtu": 1280
       }]
-      | .routing.rules += [{
-        "type": "field",
-        "inboundTag": ["vless-in"],
-        "outboundTag": "warp"
+      | .route.rules += [{
+        "inbound": ["vless-in"],
+        "outbound": "warp-wg"
       }]
-    ' /app/config.json > /tmp/config.json
+    ' /app/sb-config.json > /tmp/sb-config.json
 
-    if jq empty /tmp/config.json 2>/dev/null; then
-      mv /tmp/config.json /app/config.json
-      echo "✅ WARP 已注入 xray 配置"
+    if jq empty /tmp/sb-config.json 2>/dev/null; then
+      mv /tmp/sb-config.json /app/sb-config.json
+      echo "✅ WARP WireGuard 已注入 sing-box 配置"
     else
-      cp /app/config.json.bak /app/config.json
-      echo "⚠️ WARP 注入失败（JSON 校验不通过），已回滚"
+      cp /app/sb-config.json.bak /app/sb-config.json
+      echo "⚠️ WARP 注入失败，已回滚"
     fi
   else
     echo "⚠️ WARP 注册失败，跳过"
   fi
 fi
 
-[ -f /app/config.json ] && /usr/bin/xray -config /app/config.json &
-echo "🚀 Xray 核心网关已在本地 8080 端口拉起"
+/usr/bin/sing-box run -c /app/sb-config.json &
+echo "🚀 sing-box 核心已在本地 8080 端口拉起"
 
 sync
 
@@ -166,16 +161,19 @@ else
   /usr/local/bin/cloudflared tunnel --edge-ip-version auto --no-autoupdate --protocol http2 --url http://localhost:8080 &
 fi
 
+# ======================= 保活循环 =======================
 while true; do
   sleep 15
 
-  netstat -tln | grep -q :8080
-  XRAY_GATE=$?
-  pidof cloudflared > /dev/null
-  CF_PROCESS=$?
+  if ! netstat -tln | grep -q :8080; then
+    echo "🚨 sing-box 端口 8080 未监听，尝试重启..."
+    /usr/bin/sing-box run -c /app/sb-config.json &
+  fi
 
-  if [ $XRAY_GATE -ne 0 ] || [ $CF_PROCESS -ne 0 ]; then
-    echo "🚨 【断流警报】检测到服务硬断流！(总入口:$XRAY_GATE, 隧道进程:$CF_PROCESS)"
-    exit 1
+  if ! pidof cloudflared > /dev/null; then
+    echo "🚨 cloudflared 进程已退出"
+    if [ -n "$TUNNEL_TOKEN" ]; then
+      /usr/local/bin/cloudflared tunnel --edge-ip-version auto --no-autoupdate --protocol http2 run --token "$TUNNEL_TOKEN" &
+    fi
   fi
 done

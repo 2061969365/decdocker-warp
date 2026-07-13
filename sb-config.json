@@ -1,0 +1,25 @@
+{
+  "log": { "level": "error" },
+  "inbounds": [
+    {
+      "type": "vless",
+      "tag": "vless-in",
+      "listen": "0.0.0.0",
+      "listen_port": 8080,
+      "users": [{ "uuid": "UUID_PLACEHOLDER" }],
+      "transport": {
+        "type": "ws",
+        "path": "/ws-node"
+      }
+    }
+  ],
+  "outbounds": [
+    { "type": "direct", "tag": "direct" },
+    { "type": "block", "tag": "block" }
+  ],
+  "route": {
+    "rules": [
+      { "protocol": "bittorrent", "outbound": "block" }
+    ]
+  }
+}
