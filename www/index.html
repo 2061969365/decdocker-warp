@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">404 Not Found</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Bricolage Grotesque', sans-serif;
+            background: #0c0e14;
+            color: #f8fafc;
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .hidden { display: none !important; }
+
+        .fake-404 { text-align: center; }
+        .fake-404 h1 { font-size: 40px; font-weight: 400; color: #94a3b8; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+        .fake-404 p { font-size: 14px; color: #64748b; margin-top: 10px; }
+
+        .panel { width: 100%; max-width: 680px; }
+
+        .header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .header h1 { font-size: 20px; font-weight: 600; color: #f8fafc; }
+        .badge {
+            font-size: 11px; font-family: 'IBM Plex Mono', monospace; font-weight: 600;
+            background: rgba(74, 222, 128, 0.12); color: #4ade80;
+            padding: 4px 10px; border-radius: 99px; border: 1px solid rgba(74, 222, 128, 0.2);
+        }
+
+        .card {
+            background: #161b22; border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px; padding: 16px; margin-bottom: 12px;
+        }
+        .card-label {
+            font-size: 12px; font-family: 'IBM Plex Mono', monospace; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 8px;
+        }
+        .card-label.accent { color: #3b82f6; }
+        .card-hint { font-size: 12px; color: #64748b; margin-bottom: 10px; }
+
+        .value-box {
+            font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+            word-break: break-all; background: #0d1117;
+            padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);
+            color: #c9d1d9; line-height: 1.6; margin-bottom: 10px;
+            max-height: 120px; overflow-y: auto;
+        }
+
+        .ip-pool { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+        .ip-tag {
+            font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+            background: #0d1117; border: 1px solid rgba(255,255,255,0.08);
+            color: #3b82f6; padding: 5px 10px; border-radius: 6px; cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .ip-tag:hover { background: #3b82f6; color: #0c0e14; border-color: #3b82f6; }
+        .ip-tag.active { background: #3b82f6; color: #0c0e14; border-color: #3b82f6; }
+
+        .input-group { display: flex; gap: 8px; }
+        .input-group input {
+            flex: 1; font-family: 'IBM Plex Mono', monospace; font-size: 13px;
+            background: #0d1117; border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px; padding: 8px 12px; color: #f8fafc;
+            outline: none; transition: border-color 0.15s ease;
+        }
+        .input-group input:focus { border-color: #3b82f6; }
+        .input-group input::placeholder { color: #475569; }
+
+        .btn {
+            font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600;
+            background: #3b82f6; color: #fff; border: none; border-radius: 8px;
+            padding: 8px 16px; cursor: pointer; transition: all 0.15s ease; white-space: nowrap;
+        }
+        .btn:hover { background: #2563eb; }
+        .btn:active { transform: scale(0.97); }
+        .btn-copy {
+            width: 100%; background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2); color: #3b82f6;
+        }
+        .btn-copy:hover { background: rgba(59, 130, 246, 0.2); }
+        .btn-copy.copied {
+            background: rgba(74, 222, 128, 0.1);
+            border-color: rgba(74, 222, 128, 0.2); color: #4ade80;
+        }
+
+        .format-btn { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: #94a3b8; }
+        .format-btn:hover { background: rgba(255,255,255,0.08); }
+        .format-btn.active { background: rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.3); color: #3b82f6; }
+
+        .footer {
+            text-align: center; font-size: 11px; font-family: 'IBM Plex Mono', monospace;
+            color: #475569; margin-top: 16px; padding-top: 12px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; pointer-events: none; }
+        .toast {
+            background: #1e293b; color: #f8fafc; font-family: 'IBM Plex Mono', monospace;
+            font-size: 13px; padding: 12px 20px; border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            margin-top: 8px; animation: toast-in 0.3s ease forwards; pointer-events: auto;
+        }
+        .toast.out { animation: toast-out 0.3s ease forwards; }
+        @keyframes toast-in { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes toast-out { from { opacity: 1; } to { opacity: 0; transform: translateY(20px); } }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+    <div id="fakePage" class="fake-404">
+        <h1>404 Not Found</h1>
+        <p>nginx/1.26.1</p>
+    </div>
+
+    <div id="realPage" class="hidden">
+        <div class="panel">
+            <div class="header">
+                <h1>🛸 边缘计算网关综合控制面板</h1>
+                <span class="badge">安全防扫描激活</span>
+            </div>
+
+            <div class="card" style="padding: 12px 16px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button class="btn" style="padding: 6px 10px; font-size: 14px;" onclick="prevNode()">◀</button>
+                    <span id="currentNodeName" style="flex:1; text-align:center; font-size: 14px; font-weight: 500;">节点1</span>
+                    <button class="btn" style="padding: 6px 10px; font-size: 14px;" onclick="nextNode()">▶</button>
+                    <button class="btn" style="padding: 6px 10px; font-size: 12px;" onclick="addNode()">+ 添加</button>
+                    <button class="btn" style="padding: 6px 10px; font-size: 12px; background: rgba(255,255,255,0.06);" onclick="editNode()">编辑</button>
+                    <button class="btn" style="padding: 6px 10px; font-size: 12px; background: rgba(239,68,68,0.1); color: #ef4444;" onclick="deleteNode()">删除</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-label accent">⚡ 全网最新官方优选 IP 推荐</div>
+                <div class="card-hint">点击下方优质物理加速点，可一键自动重组下方的节点链接</div>
+                <div id="ipPool" class="ip-pool">
+                    <span style="font-size: 12px; color: #64748b;">正在捞取 IP 池...</span>
+                </div>
+                <div class="card-label" style="margin-top: 4px;">手动覆盖接入点 IP 或优选域名</div>
+                <div class="input-group">
+                    <input type="text" id="cfIpInput" placeholder="例如: 104.16.88.9 或 cf.example.com">
+                    <button class="btn" onclick="applyCustomIp()">套用接入点</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-label accent">🪐 VLESS 节点通用配置链接</div>
+                <div style="display: flex; gap: 12px; align-items: flex-start;">
+                    <div class="value-box" id="nodeLink" style="flex:1; min-height: 60px;">生成中...</div>
+                    <div id="qrCode" style="flex-shrink: 0;"></div>
+                </div>
+                <button class="btn btn-copy" id="btnCopyLink" onclick="copyText('nodeLink', 'btnCopyLink')">📋 一键复制 VLESS 节点链接</button>
+            </div>
+
+            <div class="card">
+                <div class="card-label">📦 订阅内容</div>
+                <div style="display: flex; gap: 6px; margin-bottom: 10px;">
+                    <button class="btn format-btn active" data-format="vless" onclick="switchFormat('vless')">VLESS</button>
+                    <button class="btn format-btn" data-format="clash" onclick="switchFormat('clash')">Clash</button>
+                    <button class="btn format-btn" data-format="quantumult" onclick="switchFormat('quantumult')">Quantumult</button>
+                    <button class="btn format-btn" data-format="singbox" onclick="switchFormat('singbox')">Sing-box</button>
+                </div>
+                <div class="value-box" id="subContent" style="min-height: 60px;">生成中...</div>
+                <button class="btn btn-copy" id="btnCopySub" onclick="copyText('subContent', 'btnCopySub')">📋 一键复制订阅内容</button>
+            </div>
+
+            <div class="footer">Powered by Xray-core & Cloudflare Tunnel + WARP</div>
+        </div>
+    </div>
+
+    <script>
+    const uuid = "UUID_PLACEHOLDER";
+    const wsPath = "/ws-node";
+    const nodeRemark = "NODE_REMARK_PLACEHOLDER";
+    const currentHost = window.location.host;
+
+    function showToast(message) {
+        let container = document.querySelector('.toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'toast-container';
+            document.body.appendChild(container);
+        }
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => { toast.classList.add('out'); setTimeout(() => toast.remove(), 300); }, 3000);
+    }
+
+    function copyText(elementId, btnId) {
+        const text = document.getElementById(elementId).innerText;
+        const btn = document.getElementById(btnId);
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(() => {
+                btn.classList.add('copied'); btn.textContent = '✓ 已复制';
+                showToast('已复制到剪贴板');
+                setTimeout(() => { btn.classList.remove('copied'); btn.textContent = elementId === 'nodeLink' ? '📋 一键复制 VLESS 节点链接' : '📋 一键复制订阅内容'; }, 2000);
+            }).catch(() => fallbackCopy(text, btn));
+        } else { fallbackCopy(text, btn); }
+    }
+
+    function fallbackCopy(text, btn) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text; textarea.style.position = 'fixed'; textarea.style.opacity = '0';
+        document.body.appendChild(textarea); textarea.select();
+        try { document.execCommand('copy'); btn.classList.add('copied'); btn.textContent = '✓ 已复制'; showToast('已复制到剪贴板'); setTimeout(() => { btn.classList.remove('copied'); btn.textContent = btn.id === 'btnCopyLink' ? '📋 一键复制 VLESS 节点链接' : '📋 一键复制订阅内容'; }, 2000); } catch { showToast('复制失败，请手动复制'); }
+        document.body.removeChild(textarea);
+    }
+
+    const STORAGE_KEY = 'edge-gateway-nodes';
+    let nodes = []; let currentNodeIndex = 0; let currentFormat = 'vless';
+
+    function loadNodes() {
+        try { const saved = localStorage.getItem(STORAGE_KEY); if (saved) { nodes = JSON.parse(saved); if (!Array.isArray(nodes) || nodes.length === 0) throw new Error(); } else { throw new Error(); } }
+        catch { nodes = [{ name: '节点1', uuid: uuid, wsPath: wsPath, remark: nodeRemark }]; currentNodeIndex = 0; }
+    }
+
+    function saveNodes() { localStorage.setItem(STORAGE_KEY, JSON.stringify(nodes)); }
+    function getCurrentNode() { return nodes[currentNodeIndex]; }
+    function updateNodeDisplay() { document.getElementById('currentNodeName').textContent = getCurrentNode().name; generateLinks(currentHost); }
+    function prevNode() { currentNodeIndex = (currentNodeIndex - 1 + nodes.length) % nodes.length; updateNodeDisplay(); }
+    function nextNode() { currentNodeIndex = (currentNodeIndex + 1) % nodes.length; updateNodeDisplay(); }
+
+    function addNode() {
+        const name = prompt('节点名称:'); if (!name) return;
+        const nodeUuid = prompt('UUID:', uuid); if (nodeUuid === null) return;
+        const nodePath = prompt('WebSocket 路径:', wsPath); if (nodePath === null) return;
+        const nodeRemark = prompt('备注:', name); if (nodeRemark === null) return;
+        nodes.push({ name, uuid: nodeUuid, wsPath: nodePath, remark: nodeRemark });
+        currentNodeIndex = nodes.length - 1; saveNodes(); updateNodeDisplay(); showToast(`已添加节点: ${name}`);
+    }
+
+    function editNode() {
+        const node = getCurrentNode();
+        const name = prompt('节点名称:', node.name); if (name === null) return;
+        const nodeUuid = prompt('UUID:', node.uuid); if (nodeUuid === null) return;
+        const nodePath = prompt('WebSocket 路径:', node.wsPath); if (nodePath === null) return;
+        const nodeRemark = prompt('备注:', node.remark); if (nodeRemark === null) return;
+        nodes[currentNodeIndex] = { name, uuid: nodeUuid, wsPath: nodePath, remark: nodeRemark };
+        saveNodes(); updateNodeDisplay(); showToast(`已更新节点: ${name}`);
+    }
+
+    function deleteNode() {
+        if (nodes.length <= 1) { showToast('至少保留一个节点'); return; }
+        if (!confirm(`确定删除节点 "${getCurrentNode().name}"？`)) return;
+        nodes.splice(currentNodeIndex, 1); currentNodeIndex = Math.min(currentNodeIndex, nodes.length - 1);
+        saveNodes(); updateNodeDisplay(); showToast('已删除节点');
+    }
+
+    let qrCode = null;
+    function generateLinks(connectAddress) {
+        const node = getCurrentNode();
+        const vlessLink = `vless://${node.uuid}@${connectAddress}:443?encryption=none&security=tls&type=ws&host=${currentHost}&sni=${currentHost}&path=${encodeURIComponent(node.wsPath)}#${node.remark}`;
+        document.getElementById('nodeLink').innerText = vlessLink;
+        updateQRCode(vlessLink); updateSubscriptionContent();
+    }
+
+    function updateQRCode(text) {
+        const container = document.getElementById('qrCode'); container.innerHTML = '';
+        try { qrCode = new QRCode(container, { text, width: 128, height: 128, colorDark: '#0c0e14', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M }); }
+        catch { container.innerHTML = '<span style="font-size: 11px; color: #64748b;">QR 码生成失败</span>'; }
+    }
+
+    function applyCustomIp() {
+        const inputVal = document.getElementById('cfIpInput').value.trim();
+        generateLinks(inputVal ? inputVal : currentHost);
+        showToast(inputVal ? `已套用接入点: ${inputVal}` : '已恢复默认域名');
+    }
+
+    function switchFormat(format) {
+        currentFormat = format;
+        document.querySelectorAll('.format-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.format === format));
+        updateSubscriptionContent();
+    }
+
+    function updateSubscriptionContent() {
+        const node = getCurrentNode();
+        const address = document.getElementById('cfIpInput').value.trim() || currentHost;
+        let content = '';
+        try {
+            switch (currentFormat) {
+                case 'vless': content = btoa(unescape(encodeURIComponent(generateVlessLink(node, address)))); break;
+                case 'clash': content = generateClashConfig(node, address); break;
+                case 'quantumult': content = generateQuantumultConfig(node, address); break;
+                case 'singbox': content = generateSingboxConfig(node, address); break;
+            }
+        } catch { content = '该格式暂不可用'; }
+        document.getElementById('subContent').innerText = content;
+    }
+
+    function generateVlessLink(node, address) { return `vless://${node.uuid}@${address}:443?encryption=none&security=tls&type=ws&host=${currentHost}&sni=${currentHost}&path=${encodeURIComponent(node.wsPath)}#${node.remark}`; }
+    function generateClashConfig(node, address) { return `proxies:\n  - name: ${node.remark}\n    type: vless\n    server: ${address}\n    port: 443\n    uuid: ${node.uuid}\n    network: ws\n    tls: true\n    servername: ${currentHost}\n    ws-opts:\n      path: ${node.wsPath}\n      headers:\n        Host: ${currentHost}`; }
+    function generateQuantumultConfig(node, address) { return 'vmess://' + btoa(JSON.stringify({ server: address, port: 443, uuid: node.uuid, tls: 1, tls_servername: currentHost, obfs: 'ws', obfs_path: node.wsPath, obfs_header: `Host: ${currentHost}` })); }
+    function generateSingboxConfig(node, address) { return JSON.stringify({ type: 'vless', tag: node.remark, server: address, server_port: 443, uuid: node.uuid, tls: { enabled: true, server_name: currentHost }, transport: { type: 'ws', path: node.wsPath, headers: { Host: currentHost } } }, null, 2); }
+
+    function fetchOptimizedIPs() {
+        fetch('https://cdn.jsdelivr.net/gh/Alvin9999/new-pac@master/cloudflarespeedtest/cloudflare.txt')
+            .then(res => res.text()).then(text => {
+                const lines = text.split('\n').map(s => s.trim()).filter(s => s.length > 0 && !s.includes(':'));
+                const poolDiv = document.getElementById('ipPool'); poolDiv.innerHTML = '';
+                lines.slice(0, 6).forEach(ip => {
+                    const span = document.createElement('span'); span.className = 'ip-tag'; span.innerText = ip;
+                    span.onclick = () => { document.getElementById('cfIpInput').value = ip; generateLinks(ip); showToast(`已切换到 IP: ${ip}`); };
+                    poolDiv.appendChild(span);
+                });
+            }).catch(() => { document.getElementById('ipPool').innerHTML = '<span style="font-size: 12px; color: #ef4444;">公网资源池打捞失败，可手动输入 IP</span>'; });
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('mirror')) {
+        document.getElementById('fakePage').classList.add('hidden');
+        document.getElementById('realPage').classList.remove('hidden');
+        document.getElementById('pageTitle').innerText = '🛸 智能节点订阅管理面板';
+        loadNodes(); updateNodeDisplay(); fetchOptimizedIPs();
+    }
+    </script>
+</body>
+</html>
