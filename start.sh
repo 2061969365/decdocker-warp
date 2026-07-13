@@ -60,7 +60,11 @@ if [ "$NO_WARP" != "true" ]; then
     WARP_ADDRESS_IP=$(echo "$WARP_ADDRESS" | cut -d'/' -f1)
     [ -z "$WARP_RESERVED_JSON" ] && WARP_RESERVED_JSON="[0,0,0]"
 
-    jq --arg key "$WARP_PRIVATE_KEY" --arg addr "$WARP_ADDRESS_IP" --argjson reserved "$WARP_RESERVED_JSON" '
+    IFACE_MTU=$(cat /sys/class/net/eth0/mtu 2>/dev/null || echo 1500)
+    WG_MTU=$(( IFACE_MTU > 1280 ? 1280 : IFACE_MTU - 80 ))
+    echo "🔧 容器网卡 MTU=$IFACE_MTU → WireGuard MTU=$WG_MTU"
+
+    jq --arg key "$WARP_PRIVATE_KEY" --arg addr "$WARP_ADDRESS_IP" --argjson reserved "$WARP_RESERVED_JSON" --argjson wg_mtu "$WG_MTU" '
       .outbounds += [{
         "type": "wireguard",
         "tag": "warp-wg",
@@ -70,7 +74,7 @@ if [ "$NO_WARP" != "true" ]; then
         "private_key": $key,
         "peer_public_key": "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=",
         "reserved": $reserved,
-        "mtu": 1280
+        "mtu": $wg_mtu
       }]
       | .route.rules += [{
         "inbound": ["vless-in"],
