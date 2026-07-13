@@ -48,7 +48,7 @@ if [ "$NO_WARP" != "true" ]; then
 
     if [ -f /app/wgcf-profile.conf ]; then
       WARP_PRIVATE_KEY=$(grep '^PrivateKey' /app/wgcf-profile.conf | cut -d'=' -f2- | tr -d ' ')
-      WARP_ADDRESS=$(grep '^Address' /app/wgcf-profile.conf | cut -d'=' -f2- | tr -d ' ' | cut -d',' -f1)
+      WARP_ADDRESS=$(grep '^Address' /app/wgcf-profile.conf | head -1 | cut -d'=' -f2- | tr -d ' ' | cut -d',' -f1)
     fi
 
     if [ -z "$WARP_RESERVED_JSON" ] && [ -f /app/wgcf-account.toml ]; then
